@@ -1,0 +1,72 @@
+# 视频格式转换器
+
+一款基于 **Tauri 2 + React + TypeScript + ffmpeg** 的轻量桌面视频格式转换工具。通过 ffmpeg / ffprobe 命令行（sidecar 侧载）实现视频信息读取、缩略图预览与格式转换。
+
+## ✨ 功能特性
+
+- **视频信息展示**：通过 ffprobe 读取时长、分辨率、视频/音频编码、码率、帧率、文件大小、容器格式。
+- **缩略图预览**：通过 ffmpeg 定点抽帧，实时显示预览图。
+- **格式转换**：支持 MP4 / WebM / MKV / GIF / MP3，可配置分辨率、码率、编码器、音频参数与预设方案。
+- **预设方案**：兼容优先 / 高清 / 手机 / 极小体积 一键选参。
+- **批量队列**：拖拽或选择多个视频，串行转换，实时进度条。
+- **实时进度**：解析 ffmpeg `-progress pipe:1` 输出，精确上报每个文件的转换进度。
+
+## 🛠 技术栈
+
+| 层 | 技术 | 说明 |
+|---|---|---|
+| 桌面框架 | Tauri 2.0 (Rust) | 轻量（约几 MB）、跨平台，Rust 后端 spawn ffmpeg 子进程 |
+| 前端 | React 19 + TypeScript + Vite | UI 与状态管理 |
+| 视频处理 | ffmpeg / ffprobe 4.1+ | 通过 Tauri sidecar 调用命令行 |
+| 事件通信 | Tauri IPC (invoke / emit) | 前端调用命令、后端推送进度事件 |
+
+## 📦 环境要求
+
+- Node.js ≥ 20
+- Rust 工具链 + MSVC Build Tools（Windows）
+- ffmpeg 无需单独安装 —— 首次运行前执行下载脚本拉取 sidecar（见下方）
+
+## 🚀 本地运行
+
+```bash
+# 安装依赖
+npm install
+
+# 下载 ffmpeg / ffprobe sidecar（一次性）
+powershell -ExecutionPolicy Bypass -File scripts/download-ffmpeg.ps1
+
+# 开发模式（热更新）
+npm run tauri dev
+
+# 打包发布（生成安装包）
+npm run tauri build
+```
+
+## 🗂 目录结构
+
+```
+视频格式转换器/
+├─ src/                      # React 前端
+│  ├─ App.tsx                # 主界面（三栏布局 + 队列进度）
+│  ├─ App.css                # 样式
+│  └─ types.ts               # 类型与预设方案
+├─ src-tauri/
+│  ├─ src/
+│  │  ├─ lib.rs              # Tauri 命令注册与插件
+│  │  ├─ main.rs             # 入口
+│  │  └─ ffmpeg.rs           # ffmpeg/ffprobe sidecar 封装（核心逻辑）
+│  ├─ binaries/              # sidecar 可执行文件（带 target triple 后缀）
+│  ├─ capabilities/          # 权限配置（shell/dialog/opener）
+│  ├─ tauri.conf.json        # 应用配置（含 sidecar 声明）
+│  └─ Cargo.toml
+├─ demo/index.html           # 早期布局原型（可双击预览）
+└─ PLAN.md                   # 开发计划文档
+```
+
+## 🔬 工作原理
+
+1. **读信息**：`ffprobe -print_format json -show_format -show_streams <file>`，Rust 解析 JSON 返回前端。
+2. **缩略图**：`ffmpeg -ss <t> -frames:v 1 -vf scale=480:-2 <file>`，抽帧后转 base64 回传。
+3. **转换**：根据选项构造 `ffmpeg -y -i <in> <params> -progress pipe:1 <out>`，Rust 解析 `out_time_us` 字段计算百分比，通过 `emit("convert-progress")` 实时推送。
+
+> ffmpeg 二进制内置为 Tauri sidecar：`src-tauri/binaries/ffmpeg-x86_64-pc-windows-msvc.exe`（ffprobe 同理），随应用打包分发，无需用户安装。
