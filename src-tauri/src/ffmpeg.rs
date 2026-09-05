@@ -9,6 +9,7 @@ use tauri_plugin_shell::ShellExt;
 
 /// 视频信息（ffprobe 解析结果）
 #[derive(Serialize, Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct VideoInfo {
     pub duration: f64,
     pub duration_text: String,
@@ -291,5 +292,35 @@ fn format_size(bytes: u64) -> String {
         format!("{bytes} B")
     } else {
         format!("{v:.1} {}", units[i])
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_video_info_serialization_camel_case() {
+        let info = VideoInfo {
+            duration: 42.9,
+            duration_text: "00:43".into(),
+            width: 1280,
+            height: 720,
+            resolution: "1280×720".into(),
+            video_codec: "h264".into(),
+            audio_codec: "aac".into(),
+            bitrate: "5539 kbps".into(),
+            frame_rate: "60.00 fps".into(),
+            size: 29747585,
+            size_text: "28.4 MB".into(),
+            format: "mov,mp4".into(),
+        };
+        let json = serde_json::to_string(&info).unwrap();
+        println!("SERIALIZED: {}", json);
+        assert!(json.contains("durationText"), "缺少 durationText: {json}");
+        assert!(json.contains("videoCodec"), "缺少 videoCodec: {json}");
+        assert!(json.contains("audioCodec"), "缺少 audioCodec: {json}");
+        assert!(json.contains("frameRate"), "缺少 frameRate: {json}");
+        assert!(json.contains("sizeText"), "缺少 sizeText: {json}");
     }
 }
