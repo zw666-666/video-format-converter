@@ -26,6 +26,7 @@ pub struct VideoInfo {
 
 /// 转换参数（由前端传入）
 #[derive(serde::Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct ConvertOptions {
     pub format: String,
     pub video_codec: String,
@@ -159,6 +160,7 @@ pub async fn convert_video(
 
     let key = input.clone();
     let mut last_speed = String::new();
+    let mut stderr_tail = String::new();
 
     while let Some(event) = rx.recv().await {
         match event {
@@ -182,7 +184,13 @@ pub async fn convert_video(
                     }
                 }
             }
-            CommandEvent::Stderr(_) => {}
+            CommandEvent::Stderr(bytes) => {
+                stderr_tail.push_str(&String::from_utf8_lossy(&bytes));
+                if stderr_tail.len() > 2000 {
+                    let drain = stderr_tail.len() - 2000;
+                    stderr_tail.drain(..drain);
+                }
+            }
             CommandEvent::Terminated(payload) => {
                 if payload.code == Some(0) {
                     let _ = app.emit(
@@ -191,7 +199,10 @@ pub async fn convert_video(
                     );
                     return Ok(());
                 }
-                return Err("转换失败：请检查输入文件或参数".to_string());
+                return Err(format!(
+                    "转换失败：{}",
+                    stderr_tail.trim().lines().last().unwrap_or("请检查输入文件或参数")
+                ));
             }
             _ => {}
         }

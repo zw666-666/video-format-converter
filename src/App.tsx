@@ -3,7 +3,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { getCurrentWebview } from "@tauri-apps/api/webview";
 import { open } from "@tauri-apps/plugin-dialog";
-import { openPath } from "@tauri-apps/plugin-opener";
+import { revealItemInDir } from "@tauri-apps/plugin-opener";
 import {
   basename, dirname, FORMATS, PRESETS, RESOLUTIONS, VIDEO_EXTS,
   type ConvertOptions, type FileItem, type VideoInfo,
@@ -118,18 +118,28 @@ export default function App() {
     else if (typeof result === "string") addFiles([result]);
   }
 
-  async function selectFile(path: string) {
+  function selectFile(path: string) {
     setSelected(path);
-    const item = files.find((f) => f.path === path);
-    if (item && !item.thumbnail && item.info) {
-      try {
-        const thumb = await invoke<string>("get_thumbnail", { path, timeSec: 1.0 });
-        setFiles((prev) => prev.map((f) => (f.path === path ? { ...f, thumbnail: thumb } : f)));
-      } catch {
-        /* 缩略图失败不阻断 */
-      }
-    }
   }
+
+  // 选中文件后（信息加载完成且无缩略图时）自动抽帧预览
+  useEffect(() => {
+    if (!selectedItem?.info || selectedItem.thumbnail) return;
+    const path = selectedItem.path;
+    let disposed = false;
+    invoke<string>("get_thumbnail", { path, timeSec: 1.0 })
+      .then((thumb) => {
+        if (!disposed) {
+          setFiles((prev) => prev.map((f) => (f.path === path ? { ...f, thumbnail: thumb } : f)));
+        }
+      })
+      .catch(() => {
+        /* 缩略图失败不阻断 */
+      });
+    return () => {
+      disposed = true;
+    };
+  }, [selectedItem]);
 
   function updateSettings(patch: Partial<typeof settings>) {
     setSettings((s) => ({ ...s, ...patch }));
@@ -255,7 +265,7 @@ export default function App() {
         onReset={resetQueue}
         onOpenOutput={() => {
           const done = files.find((f) => f.status === "done" && f.output);
-          if (done) openPath(dirname(done.output!));
+          if (done) revealItemInDir(done.output!);
         }}
       />
     </div>
