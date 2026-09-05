@@ -217,38 +217,36 @@ fn build_ffmpeg_args(input: &str, output: &str, o: &ConvertOptions) -> Vec<Strin
     let fmt = o.format.to_lowercase();
     let mut args: Vec<String> = vec!["-y".into(), "-i".into(), input.into()];
 
-    match fmt.as_str() {
-        "gif" => {
-            args.extend(["-vf".into(), "fps=10,scale=480:-2".into(), "-loop".into(), "0".into()]);
+    if o.video_codec.is_empty() {
+        // 音频输出（mp3/wav/flac/m4a/ogg 等）
+        args.extend(["-vn".into(), "-c:a".into(), o.audio_codec.clone()]);
+        if !o.audio_bitrate.is_empty() {
+            args.extend(["-b:a".into(), o.audio_bitrate.clone()]);
         }
-        "mp3" => {
-            args.extend(["-vn".into(), "-c:a".into(), "libmp3lame".into()]);
+    } else if fmt == "gif" {
+        // GIF 动图
+        args.extend(["-vf".into(), "fps=10,scale=480:-2".into(), "-loop".into(), "0".into()]);
+    } else {
+        // 视频输出
+        args.extend(["-c:v".into(), o.video_codec.clone()]);
+        if o.video_codec == "copy" {
+            // 直接拷贝不设码率
+        } else if !o.video_bitrate.is_empty() {
+            args.extend(["-b:v".into(), o.video_bitrate.clone()]);
+        } else {
+            args.extend(["-crf".into(), o.crf.to_string()]);
+        }
+        // 分辨率缩放
+        if o.width > 0 && o.height > 0 {
+            args.extend(["-vf".into(), format!("scale={}:{}", o.width, o.height)]);
+        }
+        // 音频
+        if o.audio_codec.is_empty() {
+            args.push("-an".into());
+        } else {
+            args.extend(["-c:a".into(), o.audio_codec.clone()]);
             if !o.audio_bitrate.is_empty() {
                 args.extend(["-b:a".into(), o.audio_bitrate.clone()]);
-            }
-        }
-        _ => {
-            // 视频编码
-            args.extend(["-c:v".into(), o.video_codec.clone()]);
-            if o.video_codec == "copy" {
-                // 直接拷贝不设码率
-            } else if !o.video_bitrate.is_empty() {
-                args.extend(["-b:v".into(), o.video_bitrate.clone()]);
-            } else {
-                args.extend(["-crf".into(), o.crf.to_string()]);
-            }
-            // 分辨率缩放
-            if o.width > 0 && o.height > 0 {
-                args.extend(["-vf".into(), format!("scale={}:{}", o.width, o.height)]);
-            }
-            // 音频
-            if o.audio_codec.is_empty() {
-                args.push("-an".into());
-            } else {
-                args.extend(["-c:a".into(), o.audio_codec.clone()]);
-                if !o.audio_bitrate.is_empty() {
-                    args.extend(["-b:a".into(), o.audio_bitrate.clone()]);
-                }
             }
         }
     }

@@ -49,11 +49,28 @@ export interface FormatDef {
 }
 
 export const FORMATS: Record<string, FormatDef> = {
+  // 视频
   mp4: { ext: "mp4", label: "MP4 (H.264)", videoCodec: "libx264", audioCodec: "aac", audioBitrate: "128k" },
+  mp4h265: { ext: "mp4", label: "MP4 (H.265/HEVC)", videoCodec: "libx265", audioCodec: "aac", audioBitrate: "128k" },
+  mov: { ext: "mov", label: "MOV", videoCodec: "libx264", audioCodec: "aac", audioBitrate: "128k" },
+  m4v: { ext: "m4v", label: "M4V", videoCodec: "libx264", audioCodec: "aac", audioBitrate: "128k" },
+  mkv: { ext: "mkv", label: "MKV (H.264)", videoCodec: "libx264", audioCodec: "aac", audioBitrate: "128k" },
+  mkvh265: { ext: "mkv", label: "MKV (H.265)", videoCodec: "libx265", audioCodec: "aac", audioBitrate: "128k" },
   webm: { ext: "webm", label: "WebM (VP9)", videoCodec: "libvpx-vp9", audioCodec: "libopus", audioBitrate: "128k" },
-  mkv: { ext: "mkv", label: "MKV", videoCodec: "libx264", audioCodec: "aac", audioBitrate: "128k" },
+  avi: { ext: "avi", label: "AVI", videoCodec: "mpeg4", audioCodec: "libmp3lame", audioBitrate: "128k" },
+  mpg: { ext: "mpg", label: "MPG (MPEG-2)", videoCodec: "mpeg2video", audioCodec: "libmp3lame", audioBitrate: "128k" },
+  wmv: { ext: "wmv", label: "WMV", videoCodec: "wmv2", audioCodec: "wmav2", audioBitrate: "128k" },
+  flv: { ext: "flv", label: "FLV", videoCodec: "flv", audioCodec: "libmp3lame", audioBitrate: "128k" },
+  ts: { ext: "ts", label: "M2TS/TS", videoCodec: "libx264", audioCodec: "aac", audioBitrate: "128k" },
+  vob: { ext: "vob", label: "VOB (DVD)", videoCodec: "mpeg2video", audioCodec: "libmp3lame", audioBitrate: "128k" },
+  ogv: { ext: "ogv", label: "OGV (Theora)", videoCodec: "libtheora", audioCodec: "libvorbis", audioBitrate: "128k" },
   gif: { ext: "gif", label: "GIF 动图", videoCodec: "gif", audioCodec: "", audioBitrate: "" },
-  mp3: { ext: "mp3", label: "MP3 (提取音频)", videoCodec: "", audioCodec: "libmp3lame", audioBitrate: "192k" },
+  // 音频
+  mp3: { ext: "mp3", label: "MP3", videoCodec: "", audioCodec: "libmp3lame", audioBitrate: "192k" },
+  wav: { ext: "wav", label: "WAV (无损)", videoCodec: "", audioCodec: "pcm_s16le", audioBitrate: "" },
+  flac: { ext: "flac", label: "FLAC (无损)", videoCodec: "", audioCodec: "flac", audioBitrate: "" },
+  m4a: { ext: "m4a", label: "M4A (AAC)", videoCodec: "", audioCodec: "aac", audioBitrate: "192k" },
+  ogg: { ext: "ogg", label: "OGG (Vorbis)", videoCodec: "", audioCodec: "libvorbis", audioBitrate: "128k" },
 };
 
 // 预设方案
@@ -87,9 +104,11 @@ export const RESOLUTIONS: ResolutionOption[] = [
   { label: "640×360", width: 640, height: 360 },
 ];
 
-// 可导入的媒体扩展名（视频 + 动图）
+// 可导入的媒体扩展名（视频 + 动图 + 音频）
 export const VIDEO_EXTS = [
-  "mp4", "mov", "mkv", "avi", "webm", "flv", "wmv", "m4v", "mpg", "mpeg", "ts", "3gp", "rmvb", "gif",
+  "mp4", "mov", "mkv", "avi", "webm", "flv", "wmv", "m4v", "mpg", "mpeg", "ts", "m2ts",
+  "3gp", "rmvb", "vob", "ogv", "asf", "gif",
+  "mp3", "wav", "m4a", "aac", "flac", "ogg", "opus",
 ];
 
 export function basename(path: string): string {

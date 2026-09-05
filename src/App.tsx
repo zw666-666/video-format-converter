@@ -380,6 +380,12 @@ function renderMedia(path: string, poster?: string) {
 
 function PreviewPane({ item }: { item: FileItem | null }) {
   const [showOutput, setShowOutput] = useState(false);
+  // 转换完成后自动切换到结果预览
+  useEffect(() => {
+    if (item?.status === "done" && item.output) {
+      setShowOutput(true);
+    }
+  }, [item?.status, item?.output]);
   const hasOutput = item?.status === "done" && !!item.output;
   const previewPath = showOutput && item?.output ? item.output : item?.path;
 
@@ -435,7 +441,7 @@ function SettingsPanel({
   onChangeResolution: (idx: number) => void;
   onChange: (patch: any) => void;
 }) {
-  const isAudio = settings.format === "mp3";
+  const isAudio = !FORMATS[settings.format].videoCodec;
   const isGif = settings.format === "gif";
   return (
     <aside className="panel settings-panel">
@@ -489,38 +495,6 @@ function SettingsPanel({
               />
               <span className="slider-val">{settings.videoBitrate > 0 ? settings.videoBitrate + " kbps" : "CRF " + settings.crf}</span>
             </div>
-          </div>
-        )}
-
-        {!isAudio && !isGif && (
-          <div className="field">
-            <label>视频编码器</label>
-            <select value={settings.videoCodec} onChange={(e) => onChange({ videoCodec: e.target.value })}>
-              <option value="libx264">H.264 (libx264)</option>
-              <option value="libx265">H.265 (libx265)</option>
-              <option value="libvpx-vp9">VP9 (libvpx-vp9)</option>
-              <option value="copy">复制（无损）</option>
-            </select>
-          </div>
-        )}
-
-        {!isGif && (
-          <div className="field">
-            <label>音频</label>
-            <select value={settings.audioCodec} onChange={(e) => onChange({ audioCodec: e.target.value })}>
-              {isAudio ? (
-                <>
-                  <option value="libmp3lame">MP3</option>
-                </>
-              ) : (
-                <>
-                  <option value="aac">AAC</option>
-                  <option value="libopus">Opus</option>
-                  <option value="libmp3lame">MP3</option>
-                  <option value="">移除音频</option>
-                </>
-              )}
-            </select>
           </div>
         )}
       </div>
