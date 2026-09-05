@@ -22,8 +22,16 @@
 
 ## 📦 环境要求
 
-- Node.js ≥ 20
+- Node.js ≥ 20（<https://nodejs.org>）
 - Rust 工具链 + MSVC Build Tools（Windows）
+
+**安装 Rust 工具链（Windows）**：
+
+1. 下载并运行 `rustup-init.exe`（<https://rustup.rs>），保持默认安装，完成后重开终端；
+2. 安装 MSVC 链接器：下载 VS Build Tools（<https://aka.ms/vs/17/release/vs_BuildTools.exe>），运行时勾选「使用 C++ 的桌面开发」工作负载（包含 MSVC 编译器与 Windows SDK）。
+
+> 缺少 Rust 环境时，`npm run tauri dev` 会因找不到编译器/链接器而失败。
+
 - ffmpeg 无需单独安装 —— 首次运行前执行下载脚本拉取 sidecar（见下方）
 
 ## 🚀 本地运行
