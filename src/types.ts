@@ -61,14 +61,15 @@ export interface PresetDef {
   label: string;
   crf: number;
   audioBitrate: string;
+  videoBitrate: number;
   resolution?: [number, number];
 }
 
 export const PRESETS: Record<string, PresetDef> = {
-  balanced: { label: "兼容优先", crf: 23, audioBitrate: "128k" },
-  hd: { label: "高清", crf: 18, audioBitrate: "192k" },
-  mobile: { label: "手机", crf: 24, audioBitrate: "96k", resolution: [854, 480] },
-  small: { label: "极小体积", crf: 28, audioBitrate: "96k" },
+  balanced: { label: "兼容优先", crf: 23, audioBitrate: "128k", videoBitrate: 0 },
+  hd: { label: "高清", crf: 18, audioBitrate: "192k", videoBitrate: 0 },
+  mobile: { label: "手机", crf: 24, audioBitrate: "96k", videoBitrate: 0, resolution: [854, 480] },
+  small: { label: "极小体积", crf: 28, audioBitrate: "96k", videoBitrate: 0 },
 };
 
 // 分辨率选项

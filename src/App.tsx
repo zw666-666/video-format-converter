@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { invoke } from "@tauri-apps/api/core";
+import { convertFileSrc, invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { getCurrentWebview } from "@tauri-apps/api/webview";
 import { open } from "@tauri-apps/plugin-dialog";
@@ -122,6 +122,11 @@ export default function App() {
     setSelected(path);
   }
 
+  function removeFile(path: string) {
+    setFiles((prev) => prev.filter((f) => f.path !== path));
+    setSelected((cur) => (cur === path ? null : cur));
+  }
+
   // 选中文件后（信息加载完成且无缩略图时）自动抽帧预览
   useEffect(() => {
     if (!selectedItem?.info || selectedItem.thumbnail) return;
@@ -163,9 +168,12 @@ export default function App() {
       preset: key,
       crf: def.crf,
       audioBitrate: def.audioBitrate,
+      videoBitrate: def.videoBitrate,
       resolutionIndex: def.resolution
-        ? RESOLUTIONS.findIndex((r) => r.width === def.resolution![0])
-        : s.resolutionIndex,
+        ? RESOLUTIONS.findIndex(
+            (r) => r.width === def.resolution![0] && r.height === def.resolution![1],
+          )
+        : 0,
     }));
   }
 
@@ -242,6 +250,7 @@ export default function App() {
           dragging={dragging}
           onPick={pickFiles}
           onSelect={selectFile}
+          onRemove={removeFile}
         />
 
         <PreviewPane item={selectedItem} />
@@ -291,13 +300,14 @@ function HeaderBar({ onPick }: { onPick: () => void }) {
 
 /* ------------------------------ 左栏 ------------------------------ */
 function FileSidebar({
-  files, selected, dragging, onPick, onSelect,
+  files, selected, dragging, onPick, onSelect, onRemove,
 }: {
   files: FileItem[];
   selected: string | null;
   dragging: boolean;
   onPick: () => void;
   onSelect: (path: string) => void;
+  onRemove: (path: string) => void;
 }) {
   return (
     <aside className="panel sidebar">
@@ -329,6 +339,16 @@ function FileSidebar({
             <span className={`badge ${f.status}`}>
               {f.status === "converting" ? `${f.percent.toFixed(0)}%` : statusText(f.status)}
             </span>
+            <button
+              className="file-del"
+              title="移除"
+              onClick={(e) => {
+                e.stopPropagation();
+                onRemove(f.path);
+              }}
+            >
+              ×
+            </button>
           </div>
         ))}
       </div>
@@ -354,16 +374,22 @@ function PreviewPane({ item }: { item: FileItem | null }) {
         <div className="preview">
           {!item ? (
             <div className="ph"><span className="film">🎥</span><p>选择左侧文件查看预览</p></div>
-          ) : item.thumbnail ? (
-            <img className="preview-img" src={item.thumbnail} alt="" />
           ) : (
-            <div className="ph"><span className="film">🎥</span><p>正在生成缩略图…</p></div>
+            <video
+              key={item.path}
+              className="preview-video"
+              src={convertFileSrc(item.path)}
+              poster={item.thumbnail}
+              controls
+              preload="metadata"
+            />
           )}
         </div>
         <div className="info-grid">
           <Info k="时长" v={item?.info?.durationText ?? "-"} />
           <Info k="分辨率" v={item?.info?.resolution ?? "-"} />
           <Info k="视频编码" v={item?.info?.videoCodec ?? "-"} />
+          <Info k="音频编码" v={item?.info?.audioCodec ?? "-"} />
           <Info k="码率" v={item?.info?.bitrate ?? "-"} />
           <Info k="帧率" v={item?.info?.frameRate ?? "-"} />
           <Info k="大小" v={item?.info?.sizeText ?? "-"} />
