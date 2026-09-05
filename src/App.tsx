@@ -16,6 +16,19 @@ function extOf(path: string): string {
   return i >= 0 ? b.slice(i + 1).toLowerCase() : "";
 }
 
+// 根据输入文件的媒体类型，返回可转换的格式 key 列表
+function convertibleFormatKeys(info?: VideoInfo): string[] {
+  if (!info) return Object.keys(FORMATS);
+  const hasVideo = info.videoCodec !== "-";
+  const hasAudio = info.audioCodec !== "无";
+  return Object.entries(FORMATS)
+    .filter(([, v]) => {
+      if (!v.videoCodec) return hasAudio; // 音频输出：输入需有音频
+      return hasVideo; // 视频/GIF 输出：输入需有视频
+    })
+    .map(([k]) => k);
+}
+
 export default function App() {
   const [files, setFiles] = useState<FileItem[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
@@ -37,6 +50,25 @@ export default function App() {
     () => files.find((f) => f.path === selected) ?? null,
     [files, selected],
   );
+
+  const convertibleKeys = useMemo(
+    () => convertibleFormatKeys(selectedItem?.info),
+    [selectedItem?.info],
+  );
+
+  // 选中文件类型与当前格式不匹配时，自动切到第一个可用格式
+  useEffect(() => {
+    if (convertibleKeys.length > 0 && !convertibleKeys.includes(settings.format)) {
+      const def = FORMATS[convertibleKeys[0]] ?? FORMATS.mp4;
+      setSettings((s) => ({
+        ...s,
+        format: convertibleKeys[0],
+        videoCodec: def.videoCodec,
+        audioCodec: def.audioCodec,
+        audioBitrate: def.audioBitrate,
+      }));
+    }
+  }, [convertibleKeys, settings.format]);
 
   // 监听转换进度事件
   useEffect(() => {
@@ -156,7 +188,7 @@ export default function App() {
       format: fmt,
       videoCodec: def.videoCodec,
       audioCodec: def.audioCodec,
-      audioBitrate: def.audioBitrate || "128k",
+      audioBitrate: def.audioBitrate,
     });
   }
 
@@ -257,6 +289,7 @@ export default function App() {
 
         <SettingsPanel
           settings={settings}
+          convertibleKeys={convertibleKeys}
           onChangeFormat={changeFormat}
           onChangePreset={changePreset}
           onChangeResolution={changeResolution}
@@ -433,9 +466,10 @@ function Info({ k, v }: { k: string; v: string }) {
 
 /* ------------------------------ 右栏 ------------------------------ */
 function SettingsPanel({
-  settings, onChangeFormat, onChangePreset, onChangeResolution, onChange,
+  settings, convertibleKeys, onChangeFormat, onChangePreset, onChangeResolution, onChange,
 }: {
   settings: any;
+  convertibleKeys: string[];
   onChangeFormat: (fmt: string) => void;
   onChangePreset: (key: string) => void;
   onChangeResolution: (idx: number) => void;
@@ -450,8 +484,8 @@ function SettingsPanel({
         <div className="field">
           <label>目标格式</label>
           <select value={settings.format} onChange={(e) => onChangeFormat(e.target.value)}>
-            {Object.entries(FORMATS).map(([k, v]) => (
-              <option key={k} value={k}>{v.label}</option>
+            {convertibleKeys.map((k) => (
+              <option key={k} value={k}>{FORMATS[k].label}</option>
             ))}
           </select>
         </div>
