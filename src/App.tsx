@@ -366,23 +366,40 @@ function statusText(s: string): string {
 }
 
 /* ------------------------------ 中栏 ------------------------------ */
+function renderMedia(path: string, poster?: string) {
+  const ext = extOf(path);
+  const src = convertFileSrc(path);
+  if (["mp3", "wav", "m4a", "aac", "flac", "ogg", "opus"].includes(ext)) {
+    return <audio key={path} className="preview-audio" src={src} controls />;
+  }
+  if (ext === "gif") {
+    return <img key={path} className="preview-media" src={src} alt="" />;
+  }
+  return <video key={path} className="preview-media" src={src} poster={poster} controls preload="metadata" />;
+}
+
 function PreviewPane({ item }: { item: FileItem | null }) {
+  const [showOutput, setShowOutput] = useState(false);
+  const hasOutput = item?.status === "done" && !!item.output;
+  const previewPath = showOutput && item?.output ? item.output : item?.path;
+
   return (
     <section className="panel stage">
-      <div className="panel-head">视频预览</div>
+      <div className="panel-head">
+        预览
+        {hasOutput && (
+          <div className="preview-toggle">
+            <button className={!showOutput ? "on" : ""} onClick={() => setShowOutput(false)}>原文件</button>
+            <button className={showOutput ? "on" : ""} onClick={() => setShowOutput(true)}>转换结果</button>
+          </div>
+        )}
+      </div>
       <div className="stage-inner">
         <div className="preview">
           {!item ? (
             <div className="ph"><span className="film">🎥</span><p>选择左侧文件查看预览</p></div>
           ) : (
-            <video
-              key={item.path}
-              className="preview-video"
-              src={convertFileSrc(item.path)}
-              poster={item.thumbnail}
-              controls
-              preload="metadata"
-            />
+            renderMedia(previewPath!, showOutput ? undefined : item.thumbnail)
           )}
         </div>
         <div className="info-grid">

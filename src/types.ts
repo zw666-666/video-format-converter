@@ -87,9 +87,9 @@ export const RESOLUTIONS: ResolutionOption[] = [
   { label: "640×360", width: 640, height: 360 },
 ];
 
-// 可转换的视频扩展名
+// 可导入的媒体扩展名（视频 + 动图）
 export const VIDEO_EXTS = [
-  "mp4", "mov", "mkv", "avi", "webm", "flv", "wmv", "m4v", "mpg", "mpeg", "ts", "3gp", "rmvb",
+  "mp4", "mov", "mkv", "avi", "webm", "flv", "wmv", "m4v", "mpg", "mpeg", "ts", "3gp", "rmvb", "gif",
 ];
 
 export function basename(path: string): string {

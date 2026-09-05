@@ -107,7 +107,14 @@ body, #root {
 .preview .ph { text-align: center; color: #4b5563; }
 .preview .ph .film { font-size: 46px; display: block; margin-bottom: 10px; }
 .preview .ph p { font-size: 13px; }
-.preview-video { width: 100%; height: 100%; object-fit: contain; background: #000; }
+.preview-media { width: 100%; height: 100%; object-fit: contain; background: #000; }
+.preview-audio { width: 80%; margin: auto; }
+.preview-toggle { display: flex; gap: 4px; }
+.preview-toggle button {
+  border: 1px solid var(--border); background: transparent; color: var(--muted);
+  padding: 3px 10px; border-radius: 7px; font-size: 11.5px; cursor: pointer;
+}
+.preview-toggle button.on { background: rgba(34, 197, 94, .12); border-color: var(--accent); color: var(--accent); }
 .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); gap: 8px; }
 .info { background: var(--panel-2); border: 1px solid var(--border); border-radius: 9px; padding: 9px 11px; }
 .info .k { color: var(--muted); font-size: 10.5px; margin-bottom: 4px; }
